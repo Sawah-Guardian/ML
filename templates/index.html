@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YOLO Daun Padi Prediction</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #result img {
+      max-width: 100%;
+      margin-top: 20px;
+    }
+    #predictions {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload Gambar Daun Padi</h1>
+  <form id="uploadForm">
+    <input type="file" id="imageInput" name="image" accept="image/*" required>
+    <br><br>
+    <button type="submit">Prediksi</button>
+  </form>
+
+  <div id="predictions"></div>
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const resultDiv = document.getElementById('result');
+    const predictionsDiv = document.getElementById('predictions');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      predictionsDiv.innerHTML = 'Loading...';
+      resultDiv.innerHTML = '';
+
+      try {
+        const response = await fetch('http://localhost:5000/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        predictionsDiv.innerHTML = '';
+
+        if (data.predictions && data.predictions.length > 0) {
+          const list = document.createElement('ul');
+          data.predictions.forEach(pred => {
+            const item = document.createElement('li');
+            item.textContent = `${pred.class_name} - Confidence: ${pred.confidence}`;
+            list.appendChild(item);
+          });
+          predictionsDiv.appendChild(list);
+        } else {
+          predictionsDiv.textContent = 'Tidak ada prediksi ditemukan.';
+        }
+
+
+        const predictedImage = data.image_url;
+        const img = document.createElement('img');
+        img.src = 'http://localhost:5000' + predictedImage;
+        resultDiv.appendChild(img);
+
+      } catch (err) {
+        predictionsDiv.textContent = 'Terjadi kesalahan saat prediksi.';
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
